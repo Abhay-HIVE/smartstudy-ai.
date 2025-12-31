@@ -55,13 +55,29 @@ function downloadPDF(){
   doc.save("SmartStudyAI_Timetable.pdf");
 }
 
-function askCoach(){
-  const q=document.getElementById("question").value;
-  const r=document.getElementById("coachReply");
-  if(!q)return;
-  r.style.display="block";
-  r.innerHTML="Analyzing your question based on your class and board…";
-  setTimeout(()=>{
-    r.innerHTML=`<strong>Coach:</strong> For your level, focus on textbook concepts first, then practice questions. Weak subjects should get daily revision.`;
-  },1200);
+async function askCoach() {
+  const q = document.getElementById("question").value;
+  const r = document.getElementById("coachReply");
+
+  if (!q) return;
+
+  r.style.display = "block";
+  r.innerHTML = "Thinking...";
+
+  try {
+    const res = await fetch("/api/coach", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: q,
+        board: document.getElementById("board").value,
+        grade: document.getElementById("grade").value
+      })
+    });
+
+    const data = await res.json();
+    r.innerHTML = `<strong>AI Coach:</strong> ${data.answer}`;
+  } catch {
+    r.innerHTML = "Unable to reach AI service right now.";
+  }
 }
