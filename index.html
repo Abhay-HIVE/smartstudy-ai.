@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SmartStudy AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --primary:#6366f1;
+      --secondary:#ec4899;
+      --accent:#22c55e;
+      --bg:#020617;
+      --card:rgba(15,23,42,.75);
+      --border:rgba(255,255,255,.1);
+      --text:#e5e7eb;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Outfit',sans-serif}
+
+    body{
+      min-height:100vh;
+      background:
+        radial-gradient(circle at top left,#1e1b4b 0%,#020617 60%);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    /* ---------- ANIMATIONS ---------- */
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(30px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    @keyframes pulse{
+      0%{box-shadow:0 0 0 rgba(99,102,241,.6)}
+      70%{box-shadow:0 0 40px rgba(99,102,241,0)}
+      100%{box-shadow:0 0 0 rgba(99,102,241,0)}
+    }
+
+    /* ---------- LAYOUT ---------- */
+    .container{max-width:1100px;margin:auto;padding:24px}
+    header{
+      position:sticky;top:0;z-index:1000;
+      backdrop-filter:blur(12px);
+      background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(236,72,153,.25));
+      border-bottom:1px solid var(--border);
+      animation:fadeUp 1s ease;
+    }
+    header .container{
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    header h1{font-size:1.5rem;font-weight:800}
+    header span{color:var(--accent)}
+
+    /* ---------- CARDS ---------- */
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:24px;
+      padding:28px;
+      margin-bottom:28px;
+      backdrop-filter:blur(14px);
+      animation:fadeUp .8s ease;
+    }
+    .card h2{margin-bottom:16px}
+
+    /* ---------- FORM ---------- */
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:16px;
+    }
+    label{font-size:.85rem;opacity:.8}
+    input,select{
+      width:100%;
+      margin-top:6px;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.4);
+      color:white;
+    }
+
+    /* ---------- BUTTON ---------- */
+    .btn{
+      margin-top:20px;
+      width:100%;
+      padding:16px;
+      border:none;
+      border-radius:18px;
+      font-weight:700;
+      color:white;
+      cursor:pointer;
+      background:linear-gradient(135deg,var(--primary),var(--secondary));
+      animation:pulse 2.5s infinite;
+    }
+    .btn.secondary{
+      background:linear-gradient(135deg,var(--accent),#16a34a);
+      animation:none;
+    }
+
+    /* ---------- TABLE ---------- */
+    table{width:100%;border-collapse:separate;border-spacing:0 12px}
+    td{
+      padding:16px;
+      background:rgba(255,255,255,.03);
+      border-left:4px solid var(--primary);
+      border-radius:12px;
+    }
+    tr.break td{border-left-color:var(--accent);font-style:italic}
+    tr.weak td{border-left-color:#ef4444}
+
+    /* ---------- AI COACH ---------- */
+    .ai-box textarea{
+      width:100%;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.4);
+      color:white;
+      resize:none;
+    }
+    .ai-response{
+      margin-top:16px;
+      padding:16px;
+      border-left:4px solid var(--primary);
+      background:rgba(0,0,0,.35);
+      display:none;
+    }
+
+    footer{
+      text-align:center;
+      opacity:.6;
+      padding:30px 0;
+      font-size:.85rem;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="container">
+    <h1>SmartStudy <span>AI</span></h1>
+    <div>Adaptive Learning Planner</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- STUDENT SETUP -->
+  <div class="card">
+    <h2>Student Setup</h2>
+    <div class="grid">
+      <div><label>Board</label><select id="board"><option>CBSE</option><option>ICSE</option><option>State Board</option></select></div>
+      <div><label>Class</label><input id="grade" placeholder="8"></div>
+      <div><label>Subjects</label><input id="subjects" placeholder="Maths, Science, SST"></div>
+      <div><label>Weak Subjects</label><input id="weak" placeholder="Maths"></div>
+      <div><label>Strong Subjects</label><input id="strong" placeholder="SST"></div>
+      <div><label>Study Hours (today)</label><input type="number" id="hours" value="4"></div>
+      <div><label>Start Time</label><input type="time" id="start"></div>
+      <div><label>Energy Level</label>
+        <select id="energy">
+          <option value="low">Low</option>
+          <option value="normal" selected>Normal</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="generate()">Generate Adaptive Timetable</button>
+  </div>
+
+  <!-- TIMETABLE -->
+  <div class="card">
+    <h2>Today’s Study Plan</h2>
+    <table><tbody id="output"></tbody></table>
+    <button class="btn secondary" onclick="downloadPDF()">Download as PDF</button>
+  </div>
+
+  <!-- AI COACH -->
+  <div class="card ai-box">
+    <h2>AI Study Coach</h2>
+    <textarea id="question" rows="3" placeholder="Ask a study question…"></textarea>
+    <button class="btn" onclick="askCoach()">Ask Coach</button>
+    <div class="ai-response" id="coachReply"></div>
+  </div>
+
+</div>
+
+<footer>
+  © SmartStudy AI • Prototype Version • Made by Abhay Sharma
+</footer>
+
+<!-- PDF LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+function generate(){
+  const subjects=document.getElementById("subjects").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const weak=document.getElementById("weak").value.split(",").map(s=>s.trim());
+  const strong=document.getElementById("strong").value.split(",").map(s=>s.trim());
+  const hours=Number(document.getElementById("hours").value);
+  const start=document.getElementById("start").value;
+  const energy=document.getElementById("energy").value;
+
+  if(!subjects.length||!hours||!start){alert("Fill all fields");return;}
+
+  let maxSession=energy==="high"?45:energy==="low"?25:35;
+  let totalMin=hours*60;
+  let breakMin=5;
+
+  let pool=subjects.map(s=>{
+    let w=2;
+    if(weak.includes(s))w=3;
+    if(strong.includes(s))w=1;
+    return{subject:s,weight:w};
+  });
+
+  let totalWeight=pool.reduce((a,b)=>a+b.weight,0);
+  pool=pool.map(p=>({...p,minutes:Math.round((p.weight/totalWeight)*totalMin)}));
+  pool.sort((a,b)=>b.weight-a.weight);
+
+  let [h,m]=start.split(":").map(Number);
+  let current=h*60+m;
+  const out=document.getElementById("output");
+  out.innerHTML="";
+
+  function fmt(t){let hr=Math.floor(t/60)%24;let mn=t%60;let ap=hr>=12?"PM":"AM";hr=hr%12||12;return`${hr}:${mn.toString().padStart(2,"0")} ${ap}`;}
+
+  pool.forEach(p=>{
+    let rem=p.minutes;
+    while(rem>0){
+      let dur=Math.min(maxSession,rem);
+      out.innerHTML+=`<tr class="${p.weight===3?"weak":""}"><td>${fmt(current)} – ${fmt(current+dur)}</td><td>${p.subject}${p.weight===3?" (Focus)":""}</td></tr>`;
+      current+=dur;rem-=dur;
+      if(rem>0){out.innerHTML+=`<tr class="break"><td>${fmt(current)} – ${fmt(current+breakMin)}</td><td>Break</td></tr>`;current+=breakMin;}
+    }
+  });
+}
+
+function downloadPDF(){
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  doc.text("SmartStudy AI - Daily Timetable",14,20);
+  let y=30;
+  document.querySelectorAll("#output tr").forEach(r=>{
+    const t=r.innerText;
+    if(y>280){doc.addPage();y=20;}
+    doc.text(t,14,y);y+=8;
+  });
+  doc.save("SmartStudyAI_Timetable.pdf");
+}
+
+function askCoach(){
+  const q=document.getElementById("question").value;
+  const r=document.getElementById("coachReply");
+  if(!q)return;
+  r.style.display="block";
+  r.innerHTML="Analyzing your question based on your class and board…";
+  setTimeout(()=>{
+    r.innerHTML=`<strong>Coach:</strong> For your level, focus on textbook concepts first, then practice questions. Weak subjects should get daily revision.`;
+  },1200);
+}
+</script>
+
+</body>
+</html>
